@@ -219,11 +219,17 @@
         async function loadContent() {
             try {
                 const response = await fetch('/api/save-content.php');
+                console.log('Response status:', response.status);
+                console.log('Response text:', await response.text());
+
                 if (response.ok) {
                     const data = await response.json();
                     if (data && !data.error) {
                         pageContent = data;
                     }
+                } else {
+                    console.error('Failed to load content:', response.status);
+                    showNotification('فشل في تحميل المحتوى: ' + response.status, 'error');
                 }
                 displayContent();
             } catch (error) {
