@@ -153,7 +153,7 @@
                     إضافة قسم جديد
                 </button>
             </div>
-            <div class="card-body" id="sectionsList">
+            <div class="card-body" id="sectionsContainer">
                 <!-- سيتم إضافة الأقسام هنا -->
             </div>
         </div>
@@ -197,76 +197,86 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        let pageContent = null;
-        let sectionModal = null;
+        let pageContent = {
+            pageDescription: {
+                title: '',
+                content: ''
+            },
+            navigation: {
+                logo: '',
+                github_link: '',
+                menu_items: []
+            },
+            sections: []
+        };
+        let sectionModal;
 
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             sectionModal = new bootstrap.Modal(document.getElementById('sectionModal'));
-            loadContent();
+            await loadContent();
         });
 
         async function loadContent() {
             try {
-                const response = await fetch('content/data.json');
-                if (!response.ok) {
-                    throw new Error('فشل في تحميل البيانات');
+                const response = await fetch('/api/save-content.php');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data && !data.error) {
+                        pageContent = data;
+                    }
                 }
-                pageContent = await response.json();
+                displayContent();
             } catch (error) {
                 console.error('Error loading content:', error);
-                pageContent = {
-                    pageDescription: {
-                        title: '',
-                        content: ''
-                    },
-                    sections: []
-                };
+                showNotification('فشل في تحميل المحتوى', 'error');
             }
-            displayContent();
         }
 
         function displayContent() {
             // عرض وصف الصفحة
             document.getElementById('pageTitle').value = pageContent.pageDescription?.title || '';
             document.getElementById('pageContent').value = pageContent.pageDescription?.content || '';
-            
+
             // عرض الأقسام
-            const sectionsList = document.getElementById('sectionsList');
-            sectionsList.innerHTML = '';
+            const sectionsContainer = document.getElementById('sectionsContainer');
+            sectionsContainer.innerHTML = '';
 
             if (pageContent.sections && pageContent.sections.length > 0) {
                 pageContent.sections.forEach((section, index) => {
-                    const sectionDiv = document.createElement('div');
-                    sectionDiv.className = 'section-card';
-                    sectionDiv.innerHTML = `
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-2">${section.title || ''}</h5>
-                            <div class="btn-group">
-                                <button class="btn btn-sm btn-outline-primary" onclick="editSection(${index})">
-                                    <i class="fas fa-edit"></i>
-                                    تحرير
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger" onclick="deleteSection(${index})">
-                                    <i class="fas fa-trash"></i>
-                                    حذف
-                                </button>
+                    const sectionHtml = `
+                        <div class="card mb-3">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">${section.title || ''}</h5>
+                                <div>
+                                    <button class="btn btn-sm btn-primary" onclick="editSection(${index})">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteSection(${index})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text">${section.content || ''}</p>
                             </div>
                         </div>
-                        <p class="mb-0 text-muted">${section.content || ''}</p>
                     `;
-                    sectionsList.appendChild(sectionDiv);
+                    sectionsContainer.innerHTML += sectionHtml;
                 });
-            } else {
-                sectionsList.innerHTML = '<p class="text-center text-muted">لا توجد أقسام حالياً</p>';
             }
         }
 
         async function saveDescription() {
-            pageContent.pageDescription = {
-                title: document.getElementById('pageTitle').value,
-                content: document.getElementById('pageContent').value
-            };
-            await saveContent();
+            try {
+                pageContent.pageDescription = {
+                    title: document.getElementById('pageTitle').value,
+                    content: document.getElementById('pageContent').value
+                };
+                await saveContent();
+                showNotification('تم حفظ وصف الصفحة بنجاح', 'success');
+            } catch (error) {
+                showNotification('حدث خطأ أثناء الحفظ: ' + error.message, 'error');
+            }
         }
 
         function addNewSection() {
@@ -285,29 +295,41 @@
         }
 
         async function saveSection() {
-            const id = document.getElementById('sectionId').value;
-            const section = {
-                title: document.getElementById('sectionTitle').value,
-                content: document.getElementById('sectionContent').value
-            };
+            try {
+                const id = document.getElementById('sectionId').value;
+                const section = {
+                    title: document.getElementById('sectionTitle').value,
+                    content: document.getElementById('sectionContent').value
+                };
 
-            if (id === '') {
-                if (!pageContent.sections) {
-                    pageContent.sections = [];
+                if (id === '') {
+                    if (!Array.isArray(pageContent.sections)) {
+                        pageContent.sections = [];
+                    }
+                    pageContent.sections.push(section);
+                } else {
+                    pageContent.sections[parseInt(id)] = section;
                 }
-                pageContent.sections.push(section);
-            } else {
-                pageContent.sections[parseInt(id)] = section;
-            }
 
-            await saveContent();
-            sectionModal.hide();
+                await saveContent();
+                sectionModal.hide();
+                showNotification('تم حفظ القسم بنجاح', 'success');
+                displayContent();
+            } catch (error) {
+                showNotification('حدث خطأ أثناء الحفظ: ' + error.message, 'error');
+            }
         }
 
         async function deleteSection(index) {
             if (confirm('هل أنت متأكد من حذف هذا القسم؟')) {
-                pageContent.sections.splice(index, 1);
-                await saveContent();
+                try {
+                    pageContent.sections.splice(index, 1);
+                    await saveContent();
+                    showNotification('تم حذف القسم بنجاح', 'success');
+                    displayContent();
+                } catch (error) {
+                    showNotification('حدث خطأ أثناء الحذف: ' + error.message, 'error');
+                }
             }
         }
 
@@ -329,25 +351,24 @@
                 if (result.error) {
                     throw new Error(result.error);
                 }
-
-                displayContent();
-                showNotification('تم الحفظ بنجاح', 'success');
+                
+                return result;
             } catch (error) {
                 console.error('Error saving content:', error);
-                showNotification('حدث خطأ أثناء الحفظ: ' + error.message, 'error');
+                throw error;
             }
         }
 
-        function showNotification(message, type) {
-            const notificationDiv = document.createElement('div');
-            notificationDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} position-fixed top-0 start-50 translate-middle-x mt-3`;
-            notificationDiv.style.zIndex = '9999';
-            notificationDiv.innerHTML = message;
-            document.body.appendChild(notificationDiv);
-            
-            setTimeout(() => {
-                notificationDiv.remove();
-            }, 3000);
+        function showNotification(message, type = 'success') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
+            alertDiv.setAttribute('role', 'alert');
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            document.body.appendChild(alertDiv);
+            setTimeout(() => alertDiv.remove(), 5000);
         }
     </script>
 </body>
