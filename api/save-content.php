@@ -19,26 +19,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $repo_name = getenv('GITHUB_REPO');
     $file_path = 'content/data.json';
 
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, "https://api.github.com/repos/$repo_owner/$repo_name/contents/$file_path");
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'User-Agent: PHP Script',
-        "Authorization: token $github_token",
-        'Accept: application/vnd.github.v3+json'
-    ]);
+    $url = "https://api.github.com/repos/$repo_owner/$repo_name/contents/$file_path";
+    $options = [
+        'http' => [
+            'header' => [
+                'User-Agent: PHP Script',
+                "Authorization: token $github_token",
+                'Accept: application/vnd.github.v3+json'
+            ],
+            'method' => 'GET',
+        ],
+    ];
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
 
-    $result = curl_exec($ch);
-    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    error_log('GitHub API Response (GET): ' . $result);
-    curl_close($ch);
-
-    if ($http_code === 200) {
+    if ($http_response_header[0] === 'HTTP/1.1 200 OK') {
         $file_info = json_decode($result, true);
         $content = base64_decode($file_info['content']);
         echo $content;
         exit;
-    } else if ($http_code === 404) {
+    } else if ($http_response_header[0] === 'HTTP/1.1 404 Not Found') {
         // إذا لم يكن الملف موجوداً، نرجع الهيكل الافتراضي
         $default_content = [
             'pageDescription' => [
@@ -125,22 +125,22 @@ if (empty($github_token) || empty($repo_owner) || empty($repo_name)) {
 $file_content = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 
 // الحصول على SHA للملف الحالي (إذا كان موجوداً)
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, "https://api.github.com/repos/$repo_owner/$repo_name/contents/$file_path");
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    'User-Agent: PHP Script',
-    "Authorization: token $github_token",
-    'Accept: application/vnd.github.v3+json'
-]);
-
-$result = curl_exec($ch);
-$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-error_log('GitHub API Response (GET): ' . $result);
-curl_close($ch);
+$url = "https://api.github.com/repos/$repo_owner/$repo_name/contents/$file_path";
+$options = [
+    'http' => [
+        'header' => [
+            'User-Agent: PHP Script',
+            "Authorization: token $github_token",
+            'Accept: application/vnd.github.v3+json'
+        ],
+        'method' => 'GET',
+    ],
+];
+$context = stream_context_create($options);
+$result = file_get_contents($url, false, $context);
 
 $sha = '';
-if ($http_code === 200) {
+if ($http_response_header[0] === 'HTTP/1.1 200 OK') {
     $file_info = json_decode($result, true);
     $sha = $file_info['sha'];
 }
@@ -155,23 +155,22 @@ if ($sha) {
     $post_data['sha'] = $sha;
 }
 
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, "https://api.github.com/repos/$repo_owner/$repo_name/contents/$file_path");
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
-curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($post_data));
-curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    'User-Agent: PHP Script',
-    "Authorization: token $github_token",
-    'Accept: application/vnd.github.v3+json'
-]);
+$options = [
+    'http' => [
+        'header' => [
+            'User-Agent: PHP Script',
+            "Authorization: token $github_token",
+            'Accept: application/vnd.github.v3+json',
+            'Content-Type: application/json'
+        ],
+        'method' => 'PUT',
+        'content' => json_encode($post_data),
+    ],
+];
+$context = stream_context_create($options);
+$result = file_get_contents($url, false, $context);
 
-$result = curl_exec($ch);
-$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-error_log('GitHub API Response (PUT): ' . $result);
-curl_close($ch);
-
-if ($http_code === 200 || $http_code === 201) {
+if ($http_response_header[0] === 'HTTP/1.1 200 OK' || $http_response_header[0] === 'HTTP/1.1 201 Created') {
     echo json_encode(['success' => true]);
 } else {
     http_response_code(500);
