@@ -1,0 +1,36 @@
+{
+    "pageDescription": {
+        "title": "وصف الصفحة",
+        "content": "قم بإضافة وصف الصفحة الرئيسية هنا"
+    },
+    "navigation": {
+        "logo": ".\/assets\/logo.svg",
+        "github_link": "https:\/\/github.com\/RokvicSasa\/Fanatic-Public",
+        "menu_items": [
+            {
+                "id": "test-i",
+                "title": "www"
+            }
+        ]
+    },
+    "sections": [
+        {
+            "id": "test-i",
+            "title": "www",
+            "content": {
+                "title": "www",
+                "description": "أدخل وصف القسdddddم هنا",
+                "steps": [
+                    "sssssss"
+                ]
+            }
+        }
+    ],
+    "footer": {
+        "text": "Fanatic is a free React template created exclusively for",
+        "link": {
+            "text": "GraphBerry",
+            "url": "https:\/\/www.graphberry.com\/"
+        }
+    }
+}

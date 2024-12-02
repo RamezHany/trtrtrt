@@ -1,0 +1,101 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Fanatic Template Documentation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:300,400,600,700,800,900" rel="stylesheet">
+    <link rel="stylesheet" href="doc-global.css">
+    <link rel="stylesheet" href="doc.css">
+    <link rel="author" href="humans.txt">
+  </head>
+  <body>
+    <div class="doc__bg"></div>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">
+                    <img src="logo.png" alt="Logo" width="30" height="24" class="d-inline-block align-text-top">
+                </a>
+            </div>
+        </nav>
+    </header>
+    <div class="wrapper">
+        <aside class="doc__nav" id="sideMenu">
+            <!-- القائمة الجانبية ستضاف هنا -->
+        </aside>
+        <article class="doc__content" id="mainContent">
+            <!-- المحتوى سيضاف هنا -->
+        </article>
+    </div>
+
+    <footer class="footer" id="pageFooter">
+        <!-- التذييل سيضاف هنا -->
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script>
+        // تحميل المحتوى عند تحميل الصفحة
+        document.addEventListener('DOMContentLoaded', loadContent);
+
+        async function loadContent() {
+            try {
+                const response = await fetch('content/data.json');
+                if (!response.ok) {
+                    throw new Error('فشل في تحميل البيانات');
+                }
+                const data = await response.json();
+                displayContent(data);
+            } catch (error) {
+                console.error('Error loading content:', error);
+            }
+        }
+
+        function displayContent(data) {
+            // عرض وصف الصفحة
+            if (data.pageDescription) {
+                const descriptionSection = document.createElement('section');
+                descriptionSection.className = 'js-section';
+                descriptionSection.innerHTML = `
+                    <h3 class="section__title">${data.pageDescription.title || 'وصف الصفحة'}</h3>
+                    <p>${data.pageDescription.content || ''}</p>
+                `;
+                document.getElementById('mainContent').innerHTML = '';
+                document.getElementById('mainContent').appendChild(descriptionSection);
+            }
+
+            // عرض الأقسام في القائمة الجانبية والمحتوى
+            if (data.sections && data.sections.length > 0) {
+                const sideMenu = document.getElementById('sideMenu');
+                const menuList = document.createElement('ul');
+                
+                data.sections.forEach((section, index) => {
+                    // إضافة للقائمة الجانبية
+                    const menuItem = document.createElement('li');
+                    menuItem.className = 'js-btn';
+                    menuItem.setAttribute('data-section', `section-${index}`);
+                    menuItem.textContent = section.title;
+                    menuList.appendChild(menuItem);
+
+                    // إضافة محتوى القسم
+                    const sectionContent = document.createElement('section');
+                    sectionContent.className = 'js-section';
+                    sectionContent.id = `section-${index}`;
+                    sectionContent.innerHTML = `
+                        <h3 class="section__title">${section.title}</h3>
+                        <p>${section.content}</p>
+                    `;
+                    document.getElementById('mainContent').appendChild(sectionContent);
+                });
+
+                sideMenu.innerHTML = '';
+                sideMenu.appendChild(menuList);
+            }
+        }
+    </script>
+    <script src="doc.js"></script>
+  </body>
+</html>

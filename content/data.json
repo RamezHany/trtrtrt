@@ -1,0 +1,52 @@
+{
+    "pageDescription": {
+        "title": "Welcome in work flowzone",
+        "content": "Welcome in work flowzone"
+    },
+    "navigation": {
+        "logo": "",
+        "github_link": "",
+        "menu_items": [
+            {
+                "id": "ppp",
+                "title": "instaltion "
+            }
+        ]
+    },
+    "sections": [
+        {
+            "id": "ppp",
+            "title": "instaltion ",
+            "content": {
+                "title": "instaltion ",
+                "description": "أدخل وصئئئئف القسم هنا",
+                "steps": [
+                    "ئئئئ"
+                ]
+            }
+        },
+        {
+            "title": "ss",
+            "content": "sssfff"
+        },
+        {
+            "title": "يبل",
+            "content": "برب"
+        },
+        {
+            "title": "TEST",
+            "content": "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGg"
+        },
+        {
+            "title": "TEST2",
+            "content": "vvvvvvvvvvv"
+        }
+    ],
+    "footer": {
+        "text": "",
+        "link": {
+            "text": "",
+            "url": ""
+        }
+    }
+}
