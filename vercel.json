@@ -1,15 +1,18 @@
 {
   "version": 2,
-  "cleanUrls": true,
   "functions": {
     "api/*.php": {
       "runtime": "vercel-php@0.7.3"
     }
   },
   "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/api/$1"
+    { 
+      "source": "/save-content.php",
+      "destination": "/api/save-content.php"
+    },
+    { 
+      "source": "/save-page-content.php",
+      "destination": "/api/save-page-content.php"
     }
   ]
 }

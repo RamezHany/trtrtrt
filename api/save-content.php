@@ -17,18 +17,7 @@ if ($data === null) {
 }
 
 // تحديد مسار الملف
-$filePath = __DIR__ . '/content/data.json';
-$dirPath = dirname($filePath);
-
-// التأكد من وجود المجلد
-if (!is_dir($dirPath)) {
-    if (!mkdir($dirPath, 0777, true)) {
-        http_response_code(500);
-        error_log('Failed to create directory: ' . $dirPath . ' at ' . date('Y-m-d H:i:s'));
-        echo json_encode(['error' => 'فشل في إنشاء المجلد']);
-        exit;
-    }
-}
+$filePath = '/tmp/data.json';
 
 // إذا كان الملف غير موجود، قم بإنشاء هيكل البيانات الأساسي
 if (!file_exists($filePath)) {

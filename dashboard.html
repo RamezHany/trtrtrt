@@ -313,7 +313,7 @@
 
         async function saveContent() {
             try {
-                const response = await fetch('save-content.php', {
+                const response = await fetch('/api/save-content.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
