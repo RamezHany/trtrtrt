@@ -16,34 +16,64 @@ if ($data === null) {
     exit;
 }
 
-// تحديد مسار الملف
-$filePath = '/tmp/data.json';
+// حفظ البيانات في ملف على GitHub
+$github_token = getenv('GITHUB_TOKEN');
+$repo_owner = getenv('GITHUB_OWNER');
+$repo_name = getenv('GITHUB_REPO');
+$file_path = 'content/data.json';
 
-// إذا كان الملف غير موجود، قم بإنشاء هيكل البيانات الأساسي
-if (!file_exists($filePath)) {
-    $data = [
-        'pageDescription' => [
-            'title' => '',
-            'content' => ''
-        ],
-        'navigation' => [
-            'logo' => '',
-            'github_link' => '',
-            'menu_items' => []
-        ],
-        'sections' => []
-    ];
+// تجهيز البيانات للحفظ
+$file_content = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+
+// الحصول على SHA للملف الحالي (إذا كان موجوداً)
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, "https://api.github.com/repos/$repo_owner/$repo_name/contents/$file_path");
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'User-Agent: PHP Script',
+    "Authorization: token $github_token",
+    'Accept: application/vnd.github.v3+json'
+]);
+
+$result = curl_exec($ch);
+$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+$sha = '';
+if ($http_code === 200) {
+    $file_info = json_decode($result, true);
+    $sha = $file_info['sha'];
 }
 
-// محاولة الكتابة في الملف
-try {
-    if (file_put_contents($filePath, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) !== false) {
-        echo json_encode(['success' => true, 'message' => 'تم الحفظ بنجاح']);
-    } else {
-        throw new Exception('فشل في كتابة الملف');
-    }
-} catch (Exception $e) {
+// تحديث الملف على GitHub
+$post_data = [
+    'message' => 'تحديث المحتوى',
+    'content' => base64_encode($file_content),
+];
+
+if ($sha) {
+    $post_data['sha'] = $sha;
+}
+
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, "https://api.github.com/repos/$repo_owner/$repo_name/contents/$file_path");
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($post_data));
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'User-Agent: PHP Script',
+    "Authorization: token $github_token",
+    'Accept: application/vnd.github.v3+json'
+]);
+
+$result = curl_exec($ch);
+$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+if ($http_code === 200 || $http_code === 201) {
+    echo json_encode(['success' => true, 'message' => 'تم الحفظ بنجاح']);
+} else {
     http_response_code(500);
-    error_log('Error saving file: ' . $e->getMessage() . ' at ' . date('Y-m-d H:i:s'));
-    echo json_encode(['error' => 'فشل في حفظ البيانات. يرجى المحاولة مرة أخرى لاحقًا.']);
+    error_log('GitHub API Error: ' . $result);
+    echo json_encode(['error' => 'فشل في حفظ البيانات على GitHub']);
 }
