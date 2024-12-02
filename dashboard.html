@@ -335,6 +335,21 @@
 
         async function saveContent() {
             try {
+                // التحقق من صحة البيانات قبل إرسالها
+                if (!pageContent) {
+                    throw new Error('البيانات غير موجودة');
+                }
+
+                if (!pageContent.pageDescription) {
+                    throw new Error('وصف الصفحة غير موجود');
+                }
+
+                if (!Array.isArray(pageContent.sections)) {
+                    throw new Error('الأقسام غير موجودة أو غير صحيحة');
+                }
+
+                console.log('Sending data:', JSON.stringify(pageContent, null, 2));
+
                 const response = await fetch('/api/save-content.php', {
                     method: 'POST',
                     headers: {
@@ -344,7 +359,9 @@
                 });
                 
                 if (!response.ok) {
-                    throw new Error('فشل في حفظ البيانات');
+                    const errorText = await response.text();
+                    console.error('Server response:', errorText);
+                    throw new Error(`فشل في حفظ البيانات: ${response.status} ${errorText}`);
                 }
 
                 const result = await response.json();
