@@ -30,6 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
     $result = curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    error_log('GitHub API Response (GET): ' . $result);
     curl_close($ch);
 
     if ($http_code === 200) {
@@ -135,6 +136,7 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, [
 
 $result = curl_exec($ch);
 $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+error_log('GitHub API Response (GET): ' . $result);
 curl_close($ch);
 
 $sha = '';
@@ -166,6 +168,7 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, [
 
 $result = curl_exec($ch);
 $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+error_log('GitHub API Response (PUT): ' . $result);
 curl_close($ch);
 
 if ($http_code === 200 || $http_code === 201) {
